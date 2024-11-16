@@ -1,13 +1,27 @@
 #!/bin/bash
 
 # Constants
-TEMPLATE="local:vztmpl/debian-12-standard_12.0-1_amd64.tar.zst" # Path to template
 STORAGE="local-lvm" # Storage location (update if needed)
 DISK=5             # Disk size in GB
 CPU=1               # Number of CPU cores
 MEMORY=1024         # Memory size in MB
 NAMESERVER="8.8.8.8" # Public DNS
 PASSWORD="admin123"  # Default root password (updated to meet requirements)
+TEMPLATE_NAME="debian-12-standard_12.7-1_amd64.tar.zst"
+TEMPLATE_PATH="/var/lib/vz/template/cache/$TEMPLATE_NAME"
+TEMPLATE_URL="https://download.proxmox.com/images/system/$TEMPLATE_NAME"
+
+# Check if template exists or download it
+if [ ! -f "$TEMPLATE_PATH" ]; then
+  echo "Template $TEMPLATE_NAME not found. Downloading..."
+  wget -O "$TEMPLATE_PATH" "$TEMPLATE_URL"
+  if [ $? -ne 0 ]; then
+    echo "Failed to download template. Exiting."
+    exit 1
+  fi
+else
+  echo "Template $TEMPLATE_NAME found."
+fi
 
 # Prompt for hostname
 read -p "Enter a hostname for the container: " HOSTNAME
@@ -18,7 +32,7 @@ echo "Using CTID: $CTID"
 
 # Create the container
 echo "Creating LXC container (CTID: $CTID)..."
-pct create $CTID $TEMPLATE \
+pct create $CTID local:vztmpl/$TEMPLATE_NAME \
   --hostname $HOSTNAME \
   --password $PASSWORD \
   --storage $STORAGE \
